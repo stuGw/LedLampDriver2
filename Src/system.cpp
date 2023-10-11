@@ -36,12 +36,12 @@ void systemClockInit()
 volatile  void delay_us(volatile uint32_t val)
 {
 	volatile uint32_t delay = val*CORE_CLOCK_MHZ;
-	uint32_t tmp = val*10;
+	uint32_t tmp = val;//*10;
 	tmp = tmp - 1;
-	while(delay)
-		{
-			delay = delay - 1;
-		}
+	while(delay--);
+	//	{
+	//		delay = delay - 1;
+	//	}
 }
 
 volatile  void delay_ms(volatile uint32_t val)

@@ -38,7 +38,7 @@ Encoder* enco;
 LampDisplay display;
 HD44780Display lcd;//display
 bool flagRtc = 0;
-uint32_t systemTimerValue = 0;
+volatile uint32_t systemTimerValue = 0;
 
 void SysTick_Handler(void)
 {
@@ -78,7 +78,7 @@ void RTC_IRQHandler(void)
 void EXTI0_IRQHandler(void)
 {
 	EXTI->PR|=0x01;
-	justLed->tuggle();
+	//justLed->tuggle();
 	if(!(bt0.buttBit&RG_BUTT_INPREG))
 	{bt0.ipt = 1; bt0.st = 1; }
 	}
@@ -131,6 +131,7 @@ void enableInterrupts()
 {
 	NVIC_EnableIRQ(RTC_IRQn);
 NVIC_EnableIRQ(EXTI0_IRQn);
+NVIC_EnableIRQ(SysTick_IRQn);
 
 }
 
@@ -298,19 +299,21 @@ int main(void)
 			signed char es;
 			unsigned short int ev;
 
-			es = enco->handleEncoder(&ev);
+		//	es = enco->handleEncoder(&ev);
 
 			uint8_t h, m, s;
 
-			char bs = handleButtInt(&bt0);
+		//	char bs = handleButtInt(&bt0);
 
-			getTimeRTC(&h, &m, &s);
+		//	getTimeRTC(&h, &m, &s);
 
-			display.drawTime(h, m, s);
-			//display.drawLampStatus(3, 2, 1, 0);
-			if(bs == BUTT_SHORTCLICK)display.drawLampConfigTime(0, 0, 17);
-			else if(bs == BUTT_LONGCLICK)display.drawLampConfigTime(1, 0, 17);
-			else if(bs == BUTT_DOUBLECLICK)display.drawLampConfigTime(2, 0, 17);
+		//	if((systemTimerValue%100) == 0)
+		//		{display.drawTime(h, m, s);
+		//	//display.drawLampStatus(3, 2, 1, 0);
+		//	if(bs == BUTT_SHORTCLICK)display.drawLampConfigTime(0, 0, 17);
+		//	else if(bs == BUTT_LONGCLICK)display.drawLampConfigTime(1, 0, 17);
+		//	else if(bs == BUTT_DOUBLECLICK)display.drawLampConfigTime(2, 0, 17);
+		//		}
 			//char data[10];
 			//itoa(ev,data,5);
 
