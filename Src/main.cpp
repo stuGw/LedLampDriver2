@@ -26,6 +26,8 @@
 #include <string.h>
 #include "lampdisplay.h"
 #include "buttons.h"
+#include "lampdriver.h"
+
 volatile struct Button bt0;
 
 #if !defined(__SOFT_FP__) && defined(__ARM_FP)
@@ -34,16 +36,23 @@ volatile struct Button bt0;
 
 
 Led* justLed;
+
+Led* lamps[8];
+LampDriver* lampDriver;
+
 Encoder* enco;
 LampDisplay display;
 HD44780Display lcd;//display
 bool flagRtc = 0;
+bool flagButt = 0;
 volatile uint32_t systemTimerValue = 0;
 
 void SysTick_Handler(void)
 {
 	systemTimerValue++;
-	if(bt0.ipt) bt0.tmd++; if(bt0.st)bt0.tm++;
+	if(systemTimerValue%200) flagButt = 1;
+	if(bt0.ipt) bt0.tmd++;
+	if(bt0.st)bt0.tm++;
 }
 
 /*
@@ -132,6 +141,7 @@ void enableInterrupts()
 	NVIC_EnableIRQ(RTC_IRQn);
 NVIC_EnableIRQ(EXTI0_IRQn);
 NVIC_EnableIRQ(SysTick_IRQn);
+NVIC_SetPriority(SysTick_IRQn, 4);
 
 }
 
@@ -222,6 +232,59 @@ char initRTC()
 		return 1;
 	}
 }
+
+void initLampsGPIO()
+{
+	RCC->APB2ENR |= RCC_APB2ENR_IOPAEN;  // Enable PORTA Periph clock
+	GPIOA->CRH &= ~(GPIO_CRH_MODE9 | GPIO_CRH_CNF9);
+	GPIOA->CRH |= GPIO_CRH_MODE9_0;
+
+	GPIOA->CRH &= ~(GPIO_CRH_MODE10 | GPIO_CRH_CNF10);
+	GPIOA->CRH |= GPIO_CRH_MODE10_0;
+
+	GPIOA->CRH &= ~(GPIO_CRH_MODE11 | GPIO_CRH_CNF11);
+	GPIOA->CRH |= GPIO_CRH_MODE11_0;
+
+	GPIOA->CRH &= ~(GPIO_CRH_MODE12 | GPIO_CRH_CNF12);
+	GPIOA->CRH |= GPIO_CRH_MODE12_0;
+
+	RCC->APB2ENR |= RCC_APB2ENR_IOPBEN;  // Enable PORTA Periph clock
+	GPIOB->CRH &= ~(GPIO_CRH_MODE12 | GPIO_CRH_CNF12);
+	GPIOB->CRH |= GPIO_CRH_MODE12_0;
+
+	GPIOB->CRH &= ~(GPIO_CRH_MODE13 | GPIO_CRH_CNF13);
+	GPIOB->CRH |= GPIO_CRH_MODE13_0;
+
+	GPIOB->CRH &= ~(GPIO_CRH_MODE14 | GPIO_CRH_CNF14);
+	GPIOB->CRH |= GPIO_CRH_MODE14_0;
+
+	GPIOB->CRH &= ~(GPIO_CRH_MODE15 | GPIO_CRH_CNF15);
+	GPIOB->CRH |= GPIO_CRH_MODE15_0;
+}
+
+//A9 A10 A11 A12 B12 B13 B14 B15
+void initLamps()
+{
+	initLampsGPIO();
+
+	lamps[0] = new Led(&GPIOA->ODR, GPIO_ODR_ODR9, 0);
+	lamps[1] = new Led(&GPIOA->ODR, GPIO_ODR_ODR10, 0);
+	lamps[2] = new Led(&GPIOA->ODR, GPIO_ODR_ODR11, 0);
+	lamps[3] = new Led(&GPIOA->ODR, GPIO_ODR_ODR12, 0);
+
+	lamps[4] = new Led(&GPIOB->ODR, GPIO_ODR_ODR12, 0);
+	lamps[5] = new Led(&GPIOB->ODR, GPIO_ODR_ODR13, 0);
+	lamps[6] = new Led(&GPIOB->ODR, GPIO_ODR_ODR14, 0);
+	lamps[7] = new Led(&GPIOB->ODR, GPIO_ODR_ODR15, 0);
+
+	int i = 0;
+	while(i<8)
+	{
+		lamps[i]->off();
+		i++;
+	}
+}
+
 int main(void)
 {
 	systemClockInit();
@@ -236,20 +299,20 @@ int main(void)
 	RCC->APB2ENR |= RCC_APB2ENR_IOPCEN;  // Enable PORTC Periph clock
 	RCC->APB2ENR |= RCC_APB2ENR_IOPAEN;  // Enable PORTA Periph clock
 	/*OTHER PINS*/
-		//just led
-		GPIOC->CRH &= ~(GPIO_CRH_MODE13 | GPIO_CRH_CNF13);
-		GPIOC->CRH |= GPIO_CRH_MODE13_0;
+	//just led
+	GPIOC->CRH &= ~(GPIO_CRH_MODE13 | GPIO_CRH_CNF13);
+	GPIOC->CRH |= GPIO_CRH_MODE13_0;
 
-		GPIOA->CRL|= GPIO_CRL_MODE2_0 | GPIO_CRL_MODE2_1 | GPIO_CRL_MODE3_0 | GPIO_CRL_MODE3_1 | GPIO_CRL_MODE4_0 | GPIO_CRL_MODE4_1 | GPIO_CRL_MODE5_0 | GPIO_CRL_MODE5_1 | GPIO_CRL_MODE6_0 | GPIO_CRL_MODE6_1 | GPIO_CRL_MODE7_0 | GPIO_CRL_MODE7_1 ;
-			GPIOA->CRL&= ~(GPIO_CRL_CNF2_1 | GPIO_CRL_CNF3_1 | GPIO_CRL_CNF4_1 | GPIO_CRL_CNF5_1  |  GPIO_CRL_CNF6_1 | GPIO_CRL_CNF7_1 );
-			GPIOA->CRL|= GPIO_CRL_CNF2_0 | GPIO_CRL_CNF3_0 | GPIO_CRL_CNF4_0 | GPIO_CRL_CNF5_0  |  GPIO_CRL_CNF6_0 | GPIO_CRL_CNF7_0;
+	GPIOA->CRL|= GPIO_CRL_MODE2_0 | GPIO_CRL_MODE2_1 | GPIO_CRL_MODE3_0 | GPIO_CRL_MODE3_1 | GPIO_CRL_MODE4_0 | GPIO_CRL_MODE4_1 | GPIO_CRL_MODE5_0 | GPIO_CRL_MODE5_1 | GPIO_CRL_MODE6_0 | GPIO_CRL_MODE6_1 | GPIO_CRL_MODE7_0 | GPIO_CRL_MODE7_1 ;
+	GPIOA->CRL&= ~(GPIO_CRL_CNF2_1 | GPIO_CRL_CNF3_1 | GPIO_CRL_CNF4_1 | GPIO_CRL_CNF5_1  |  GPIO_CRL_CNF6_1 | GPIO_CRL_CNF7_1 );
+	GPIOA->CRL|= GPIO_CRL_CNF2_0 | GPIO_CRL_CNF3_0 | GPIO_CRL_CNF4_0 | GPIO_CRL_CNF5_0  |  GPIO_CRL_CNF6_0 | GPIO_CRL_CNF7_0;
 
 
-			if(!initRTC())setTimeRTC(0,0,0);
+	if(!initRTC())setTimeRTC(0,0,0);
 
-			initExtIntGPIO();
+	initExtIntGPIO();
 
-				enableInterrupts();
+	enableInterrupts();
 
 
 	justLed = new Led(&GPIOC->ODR, GPIO_ODR_ODR13,0);
@@ -257,75 +320,90 @@ int main(void)
 	enco = new Encoder(&TIM4->CNT, &TIM4->ARR, 10, 2);
 
 
-
+	initLamps();
+	lampDriver = new LampDriver(8,lamps);
 	PinsMask lcdpm;//for gpio
-			//debug
-			//lcdpm.E = GPIOPIN_5;// dng pa4
-			//lcdpm.RS = GPIOPIN_4;//0x00000010;//dbg pa5
-			//lcdpm.DB4 = GPIOPIN_10;//0x00000400;//bdg pa10
-			//lcdpm.DB5 = GPIOPIN_11;//0x00000800;//dbg pa11
-			//lcdpm.DB6 = GPIOPIN_12;//0x00001000;//dbg pa12
-			//lcdpm.DB7 = GPIOPIN_15;//0x00008000;//dbg pa15
-			//lcd.setInterface(HD44780Display::IFACE_PARRALEL4, &(GPIOA->ODR), lcdpm);
+	//debug
+	//lcdpm.E = GPIOPIN_5;// dng pa4
+	//lcdpm.RS = GPIOPIN_4;//0x00000010;//dbg pa5
+	//lcdpm.DB4 = GPIOPIN_10;//0x00000400;//bdg pa10
+	//lcdpm.DB5 = GPIOPIN_11;//0x00000800;//dbg pa11
+	//lcdpm.DB6 = GPIOPIN_12;//0x00001000;//dbg pa12
+	//lcdpm.DB7 = GPIOPIN_15;//0x00008000;//dbg pa15
+	//lcd.setInterface(HD44780Display::IFACE_PARRALEL4, &(GPIOA->ODR), lcdpm);
 
-			//work
-			lcdpm.E = GPIOPIN_3;// dng pa4
-			lcdpm.RS = GPIOPIN_2;//0x00000010;//dbg pa5
-			lcdpm.DB4 = GPIOPIN_4;//0x00000400;//bdg pa10
-			lcdpm.DB5 = GPIOPIN_5;//0x00000800;//dbg pa11
-			lcdpm.DB6 = GPIOPIN_6;//0x00001000;//dbg pa12
-			lcdpm.DB7 = GPIOPIN_7;//0x00008000;//dbg pa15
-			lcd.setInterface(HD44780Display::IFACE_PARRALEL4, &(GPIOA->ODR), lcdpm);
+	//work
+	lcdpm.E = GPIOPIN_3;// dng pa4
+	lcdpm.RS = GPIOPIN_2;//0x00000010;//dbg pa5
+	lcdpm.DB4 = GPIOPIN_4;//0x00000400;//bdg pa10
+	lcdpm.DB5 = GPIOPIN_5;//0x00000800;//dbg pa11
+	lcdpm.DB6 = GPIOPIN_6;//0x00001000;//dbg pa12
+	lcdpm.DB7 = GPIOPIN_7;//0x00008000;//dbg pa15
+	lcd.setInterface(HD44780Display::IFACE_PARRALEL4, &(GPIOA->ODR), lcdpm);
 
-			lcd.init(2, 16);
-		//	lcd.print(0, static_cast<char*>("-055C      +999C"));
+	lcd.init(2, 16);
+	//	lcd.print(0, static_cast<char*>("-055C      +999C"));
 	//		lcd.print(1, "777.0W     99.9V");
 
-			display.setDisplay(&lcd);
+	display.setDisplay(&lcd);
 
-
+lamps[0]->on();
+lamps[4+1]->on();
+lamps[2]->on();
+lamps[4+2]->on();
 	int i = 0;
-    /* Loop forever */
+	/* Loop forever */
 	for(;;)
 
 	{
 		i++;
-	//	if(i>100000)
-	//	{
-			//ledTuggle();
+		//	if(i>100000)
+		//	{
+		//ledTuggle();
 		//delay_ms(1000);
-		if(systemTimerValue%1000 == 0)	justLed->tuggle();
-			i = 0;
-			signed char es;
-			unsigned short int ev;
 
+		i = 0;
+		signed char es;
+		unsigned short int ev;
+		char bs;
 		//	es = enco->handleEncoder(&ev);
-
-			uint8_t h, m, s;
-
 		//	char bs = handleButtInt(&bt0);
+		uint8_t h, m, s;
 
-		//	getTimeRTC(&h, &m, &s);
+			if(flagRtc)
+			{
+				flagRtc = 0;
+				getTimeRTC(&h, &m, &s);
+				justLed->tuggle();
+				display.drawTime(h, m, s);
+			}
 
-		//	if((systemTimerValue%100) == 0)
-		//		{display.drawTime(h, m, s);
-		//	//display.drawLampStatus(3, 2, 1, 0);
-		//	if(bs == BUTT_SHORTCLICK)display.drawLampConfigTime(0, 0, 17);
-		//	else if(bs == BUTT_LONGCLICK)display.drawLampConfigTime(1, 0, 17);
-		//	else if(bs == BUTT_DOUBLECLICK)display.drawLampConfigTime(2, 0, 17);
-		//		}
-			//char data[10];
-			//itoa(ev,data,5);
+		if(systemTimerValue%1000 == 0)
+		{
+		//	justLed->tuggle();
 
 
-			//lcd.print(0, data);
-		//if(es>0)	lcd.print(1, "+");
-		//else if(es<0)lcd.print(1, "-");
-		//else lcd.print(1, " ");
-	//	}
-		//else
-		//{
-		//	i++;
-		//}
+		}
+
+		if(flagButt)
+		{
+			es = enco->handleEncoder(&ev);
+			bs = handleButtInt(&bt0);
+
+
+
+					//	//display.drawLampStatus(3, 2, 1, 0);
+		//	if(bs == BUTT_SHORTCLICK)display.drawLampChannelsConfig(0, 0, 17, 1);
+			//else if(bs == BUTT_LONGCLICK)display.drawLampChannelsConfig(1, 0, 17, 0);
+			//else if(bs == BUTT_DOUBLECLICK)display.drawLampChannelsConfig(2, 1, 17, 1);
+			display.drawLampStatus(lamps);
+			flagButt = 0;
+			display.refresh();
+		}
+
+		i = 0;
+
+
+
 	}
 }

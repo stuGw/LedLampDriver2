@@ -37,8 +37,8 @@ void Display::clearBuff1()
 void Display::refreshDisplay()
 {
 		lcd->refresh();
-		clearBuff0();
-		clearBuff1();
+	//	clearBuff0();
+	//	clearBuff1();
 }
 
 

@@ -6,7 +6,7 @@
  */
 
 #include <lampdisplay.h>
-
+#include "led.h"
 LampDisplay::LampDisplay() {
 	// TODO Auto-generated constructor stub
 
@@ -18,6 +18,7 @@ LampDisplay::~LampDisplay() {
 
 void LampDisplay::fillBufferTime(uint8_t pos, uint8_t h, uint8_t m, uint8_t s)
 {
+
 	buffer[pos++] = h/10 + 0x30;
 	buffer[pos++] = h%10 + 0x30;
 	buffer[pos++] = ':';//h/10 + 0x30;
@@ -33,6 +34,7 @@ void LampDisplay::fillBufferTime(uint8_t pos, uint8_t h, uint8_t m, uint8_t s)
 
 void LampDisplay::drawTime(uint8_t h, uint8_t m, uint8_t s)
 {
+	clearBuff1();
 	buffer[TIME_YPOS*cols + TIME_LABEL_XPOS] = 'h';
 	buffer[TIME_YPOS*cols + TIME_LABEL_XPOS + 1] = 'A';
 	buffer[TIME_YPOS*cols + TIME_LABEL_XPOS + 2] = 'C';
@@ -40,17 +42,39 @@ void LampDisplay::drawTime(uint8_t h, uint8_t m, uint8_t s)
 	buffer[TIME_YPOS*cols + TIME_LABEL_XPOS + 4] = ' ';
 
 	fillBufferTime(TIME_YPOS*cols + TIME_LABEL_XPOS + 5, h,m,s);
-	refreshDisplay();
+	//refreshDisplay();
+}
+
+void LampDisplay::drawLampChannelsConfig(uint8_t lampNo, uint8_t lampColorm, uint8_t hour, bool on)
+{
+	drawLampConfigTime(lampNo, lampColorm, hour);
+	drawLampConfigStatuc(on);
 }
 
 void LampDisplay::drawLampConfigTime(uint8_t lampNo, uint8_t lampColorm, uint8_t hour)
 {
 	char colors[2] = { 'R', 'W' };
+	clearBuff0();
 	buffer[LAMP_CONFIG_YPOS*cols + LAMP_CONFIG_XPOS] = lampNo+0x30;
 	buffer[LAMP_CONFIG_YPOS*cols + LAMP_CONFIG_XPOS + 1]  = ' ';
 
-	buffer[LAMP_CONFIG_YPOS*cols + LAMP_CONFIG_COLOR_XPOS]  = colors[lampColorm];
-	buffer[LAMP_CONFIG_YPOS*cols + LAMP_CONFIG_COLOR_XPOS + 1]  = ' ';
+	if(lampColorm)
+	{
+		buffer[LAMP_CONFIG_YPOS*cols + LAMP_CONFIG_COLOR_XPOS]  = 'K';
+		buffer[LAMP_CONFIG_YPOS*cols + LAMP_CONFIG_COLOR_XPOS + 1]  = 'P';
+		buffer[LAMP_CONFIG_YPOS*cols + LAMP_CONFIG_COLOR_XPOS + 2]  = 'A';
+		buffer[LAMP_CONFIG_YPOS*cols + LAMP_CONFIG_COLOR_XPOS + 3]  = 'C';
+		buffer[LAMP_CONFIG_YPOS*cols + LAMP_CONFIG_COLOR_XPOS + 4]  = 'H';
+		buffer[LAMP_CONFIG_YPOS*cols + LAMP_CONFIG_COLOR_XPOS + 5]  = '.';
+	}
+	else
+	{
+		buffer[LAMP_CONFIG_YPOS*cols + LAMP_CONFIG_COLOR_XPOS]  = 2;
+		buffer[LAMP_CONFIG_YPOS*cols + LAMP_CONFIG_COLOR_XPOS + 1]  = 'E';
+		buffer[LAMP_CONFIG_YPOS*cols + LAMP_CONFIG_COLOR_XPOS + 2]  = 1;
+		buffer[LAMP_CONFIG_YPOS*cols + LAMP_CONFIG_COLOR_XPOS + 3]  = '.';
+
+	}
 
 	buffer[LAMP_CONFIG_YPOS*cols + LAMP_CONFIG_HOUR_XPOS]  = 'B';// colors[lampColorm];
 	buffer[LAMP_CONFIG_YPOS*cols + LAMP_CONFIG_HOUR_XPOS + 1]  = 'P';// colors[lampColorm];
@@ -64,7 +88,22 @@ void LampDisplay::drawLampConfigTime(uint8_t lampNo, uint8_t lampColorm, uint8_t
 
 void LampDisplay::drawLampConfigStatuc(bool on)
 {
-
+	clearBuff1();
+	if(on)
+	{
+		buffer[LAMP_CONFIG_STATE_YPOS*cols + LAMP_CONFIG_STATE_XPOS] = 'B';
+		buffer[LAMP_CONFIG_STATE_YPOS*cols + LAMP_CONFIG_STATE_XPOS + 1] = 'K';
+		buffer[LAMP_CONFIG_STATE_YPOS*cols + LAMP_CONFIG_STATE_XPOS + 2] = 1;//rus L
+		buffer[LAMP_CONFIG_STATE_YPOS*cols + LAMP_CONFIG_STATE_XPOS + 3] = '.';
+	}
+	else
+	{
+		buffer[LAMP_CONFIG_STATE_YPOS*cols + LAMP_CONFIG_STATE_XPOS] = 'O';
+		buffer[LAMP_CONFIG_STATE_YPOS*cols + LAMP_CONFIG_STATE_XPOS + 1] = 'T';
+		buffer[LAMP_CONFIG_STATE_YPOS*cols + LAMP_CONFIG_STATE_XPOS + 2] = 'K';//rus L
+		buffer[LAMP_CONFIG_STATE_YPOS*cols + LAMP_CONFIG_STATE_XPOS + 3] = 1;
+		buffer[LAMP_CONFIG_STATE_YPOS*cols + LAMP_CONFIG_STATE_XPOS + 4] = '.';
+	}
 }
 
 void LampDisplay::fillLampStatus(uint8_t pos, uint8_t status)
@@ -80,8 +119,38 @@ void LampDisplay::fillLampStatus(uint8_t pos, uint8_t status)
 
 }
 
+void LampDisplay::drawLampStatus(Led** lamps)
+{
+	clearBuff0();
+	if(lamps[0]->onState()){ buffer[LAMP_STATUS_YPOS*cols + LAMP1_STATUS_XPOS] = 'K'; }
+	else { buffer[LAMP_STATUS_YPOS*cols + LAMP1_STATUS_XPOS] = 'X'; }
+
+	if(lamps[1]->onState()){ buffer[LAMP_STATUS_YPOS*cols + LAMP1_STATUS_XPOS + 3] = 'K'; }
+		else { buffer[LAMP_STATUS_YPOS*cols + LAMP1_STATUS_XPOS + 3] = 'X'; }
+
+	if(lamps[2]->onState()){ buffer[LAMP_STATUS_YPOS*cols + LAMP1_STATUS_XPOS + 6] = 'K'; }
+		else { buffer[LAMP_STATUS_YPOS*cols + LAMP1_STATUS_XPOS + 6] = 'X'; }
+
+	if(lamps[3]->onState()){ buffer[LAMP_STATUS_YPOS*cols + LAMP1_STATUS_XPOS + 9] = 'K'; }
+		else { buffer[LAMP_STATUS_YPOS*cols + LAMP1_STATUS_XPOS + 9] = 'X'; }
+
+	if(lamps[4]->onState()){ buffer[LAMP_STATUS_YPOS*cols + LAMP1_STATUS_XPOS + 1] = 2; }
+	else { buffer[LAMP_STATUS_YPOS*cols + LAMP1_STATUS_XPOS + 1] = 'X'; }
+
+	if(lamps[5]->onState()){ buffer[LAMP_STATUS_YPOS*cols + LAMP1_STATUS_XPOS + 4] = 2; }
+		else { buffer[LAMP_STATUS_YPOS*cols + LAMP1_STATUS_XPOS + 4] = 'X'; }
+
+	if(lamps[6]->onState()){ buffer[LAMP_STATUS_YPOS*cols + LAMP1_STATUS_XPOS + 7] = 2; }
+		else { buffer[LAMP_STATUS_YPOS*cols + LAMP1_STATUS_XPOS + 7] = 'X'; }
+
+	if(lamps[7]->onState()){ buffer[LAMP_STATUS_YPOS*cols + LAMP1_STATUS_XPOS + 10] = 2; }
+		else { buffer[LAMP_STATUS_YPOS*cols + LAMP1_STATUS_XPOS + 10] = 'X'; }
+}
+
+
 void LampDisplay::drawLampStatus(uint8_t l1, uint8_t l2, uint8_t l3, uint8_t l4)
 {
+	clearBuff0();
 	buffer[LAMP_STATUS_YPOS*cols + LAMP1_STATUS_XPOS] = '1';
 	fillLampStatus(LAMP_STATUS_YPOS*cols + LAMP1_STATUS_XPOS + 1, l1);
 	buffer[LAMP_STATUS_YPOS*cols + LAMP1_STATUS_XPOS + 2] = ' ';

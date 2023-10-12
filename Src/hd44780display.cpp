@@ -96,12 +96,12 @@ void HD44780Display::sendByte(uint8_t byte, bool isData)
 		setByte(byte>>4,false);//H
 
 		*ioport |= pinsMask.E;//lcdEnUp();
-		delay_ms(1);
+		delay_us(10);
 		*ioport &= ~pinsMask.E;//lcdEnDwn();
 
 		setByte(byte,false);//L
 		*ioport |= pinsMask.E;//lcdEnUp();
-		delay_ms(1);
+		delay_us(10);
 		*ioport &= ~pinsMask.E;//lcdEnDwn();
 	}
 }
@@ -244,8 +244,8 @@ void HD44780Display::init(uint8_t countLines, uint8_t countSymbols)
 		sendHalfByteCmd(0x04,0);delay_ms(1);
 	}
 
-	unsigned char pbuff[8] = {0x0c,0x12,0x12,0x0c,0x00,0x00,0x00,0x00};
-	unsigned char pbuff2[8] = {0x08,0x14,0x0b,0x04,0x04,0x04,0x03,0x00};
+	unsigned char pbuff[8] = {0x03,0x05,0x09,0x09,0x09,0x09,0x11,0x00};//L
+	unsigned char pbuff2[8] = {0x1f,0x10,0x10,0x1e,0x11,0x11,0x1e,0x00};//B
 	unsigned char pbuff3[8] = {0x1e,0x12,0x10,0x10,0x10,0x10,0x10,0x00};
 	unsigned char pbuff4[8] = {0x1f,0x11,0x11,0x11,0x11,0x11,0x11,0x00};
 	createCustomCharacter(pbuff,1);
@@ -264,6 +264,7 @@ void HD44780Display::createCustomCharacter (unsigned char *Pattern, const char L
 
 void HD44780Display::refresh()
 {
+
 	print(0,buffer[0]);
 	print(1,buffer[1]);
 }
