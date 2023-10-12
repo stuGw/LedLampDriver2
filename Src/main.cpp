@@ -245,8 +245,8 @@ void initLampsGPIO()
 	GPIOA->CRH &= ~(GPIO_CRH_MODE11 | GPIO_CRH_CNF11);
 	GPIOA->CRH |= GPIO_CRH_MODE11_0;
 
-	GPIOA->CRH &= ~(GPIO_CRH_MODE12 | GPIO_CRH_CNF12);
-	GPIOA->CRH |= GPIO_CRH_MODE12_0;
+	GPIOA->CRH &= ~(GPIO_CRH_MODE8 | GPIO_CRH_CNF8);
+	GPIOA->CRH |= GPIO_CRH_MODE8_0;
 
 	RCC->APB2ENR |= RCC_APB2ENR_IOPBEN;  // Enable PORTA Periph clock
 	GPIOB->CRH &= ~(GPIO_CRH_MODE12 | GPIO_CRH_CNF12);
@@ -267,10 +267,10 @@ void initLamps()
 {
 	initLampsGPIO();
 
-	lamps[0] = new Led(&GPIOA->ODR, GPIO_ODR_ODR9, 0);
-	lamps[1] = new Led(&GPIOA->ODR, GPIO_ODR_ODR10, 0);
-	lamps[2] = new Led(&GPIOA->ODR, GPIO_ODR_ODR11, 0);
-	lamps[3] = new Led(&GPIOA->ODR, GPIO_ODR_ODR12, 0);
+	lamps[0] = new Led(&GPIOA->ODR, GPIO_ODR_ODR8, 0);
+	lamps[1] = new Led(&GPIOA->ODR, GPIO_ODR_ODR9, 0);
+	lamps[2] = new Led(&GPIOA->ODR, GPIO_ODR_ODR10, 0);
+	lamps[3] = new Led(&GPIOA->ODR, GPIO_ODR_ODR11, 0);
 
 	lamps[4] = new Led(&GPIOB->ODR, GPIO_ODR_ODR12, 0);
 	lamps[5] = new Led(&GPIOB->ODR, GPIO_ODR_ODR13, 0);
