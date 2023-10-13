@@ -35,10 +35,10 @@ void LampDisplay::fillBufferTime(uint8_t pos, uint8_t h, uint8_t m, uint8_t s)
 void LampDisplay::drawTime(uint8_t h, uint8_t m, uint8_t s)
 {
 	clearBuff1();
-	buffer[TIME_YPOS*cols + TIME_LABEL_XPOS] = 'h';
+	buffer[TIME_YPOS*cols + TIME_LABEL_XPOS] = 3;
 	buffer[TIME_YPOS*cols + TIME_LABEL_XPOS + 1] = 'A';
 	buffer[TIME_YPOS*cols + TIME_LABEL_XPOS + 2] = 'C';
-	buffer[TIME_YPOS*cols + TIME_LABEL_XPOS + 3] = 'P';
+	buffer[TIME_YPOS*cols + TIME_LABEL_XPOS + 3] = 4;
 	buffer[TIME_YPOS*cols + TIME_LABEL_XPOS + 4] = ' ';
 
 	fillBufferTime(TIME_YPOS*cols + TIME_LABEL_XPOS + 5, h,m,s);
@@ -166,4 +166,55 @@ void LampDisplay::drawLampStatus(uint8_t l1, uint8_t l2, uint8_t l3, uint8_t l4)
 			buffer[LAMP_STATUS_YPOS*cols + LAMP4_STATUS_XPOS] = '4';
 	fillLampStatus(LAMP_STATUS_YPOS*cols + LAMP4_STATUS_XPOS + 1, l4);
 	buffer[LAMP_STATUS_YPOS*cols + LAMP4_STATUS_XPOS + 2] = ' ';
+}
+
+void LampDisplay::drawTimeConfig(uint8_t menuItem, uint8_t hour, uint8_t min, uint8_t sec)
+{
+
+}
+
+void LampDisplay::drawDebug(uint8_t punkt, uint8_t value)
+{
+	clearBuff0();
+
+	buffer[0*16 + 0] = 'P';
+	buffer[0*16 + 1] = '-';
+	buffer[0*16 + 2] = ' ';
+	buffer[0*16 + 3] = punkt/10 + 0x30;
+	buffer[0*16 + 4] = punkt%10 + 0x30;
+	buffer[0*16 + 5] = ' ';
+	buffer[0*16 + 6] = 'V';
+	buffer[0*16 + 7] = '-';
+	buffer[0*16 + 8] = ' ';
+	buffer[0*16 + 9] = value/10 + 0x30;
+	buffer[0*16 + 10] = value%10 + 0x30;
+}
+
+void LampDisplay::drawDebug2(uint8_t punkt, uint8_t value, uint32_t state)
+{
+	clearBuff0();
+
+	buffer[0*16 + 0] = 'P';
+	buffer[0*16 + 1] = '-';
+	buffer[0*16 + 2] = ' ';
+	buffer[0*16 + 3] = punkt/10 + 0x30;
+	buffer[0*16 + 4] = punkt%10 + 0x30;
+	buffer[0*16 + 5] = ' ';
+	buffer[0*16 + 6] = 'V';
+	buffer[0*16 + 7] = '-';
+	buffer[0*16 + 8] = ' ';
+	buffer[0*16 + 9] = value/10 + 0x30;
+	buffer[0*16 + 10] = value%10 + 0x30;
+	if(state)
+	{
+		buffer[0*16 + 11] = ' ';
+		buffer[0*16 + 12] = 'O';
+		buffer[0*16 + 13] = 'N';
+	}
+	else
+	{
+		buffer[0*16 + 11] = ' ';
+				buffer[0*16 + 12] = 'O';
+				buffer[0*16 + 13] = 'F';
+	}
 }

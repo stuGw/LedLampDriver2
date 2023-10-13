@@ -1,10 +1,171 @@
-#include "stm32f10x.h"
+
 #include "system.h"
 #include "buttons.h"
 #include "menu.h"
+#include "encoder.h"
 //#include "uprot.h"
-#include "lcdMax7219driver.h"
 #include <stdlib.h>
+#include <stdint.h>
+#include "lampdisplay.h"
+
+ConfigureMenu::ConfigureMenu(uint8_t countValues, Encoder* encoder, volatile Button* button)
+{
+	count = countValues;
+	fptr = new func_t[countValues];
+	maxVals = new uint32_t[countValues];
+	values = new uint32_t[countValues];
+	enco = encoder;
+	butt = button;
+	isInConfigurationMode = false;
+	configurationTimeout = 0;
+}
+
+bool ConfigureMenu::setFunction(uint8_t index, func_t ptr, uint32_t maxValue, uint32_t currentValue)
+{
+	if(index>=count) return false;
+	fptr[index] = ptr;
+	maxVals[index] = maxValue;
+	values[index] = currentValue;
+}
+//Обработка пользовательского интерфейса ввода
+bool ConfigureMenu::handleUI()
+{
+	signed char es = 0;
+	unsigned short int ev = 0;
+	char bs = 0;
+	//if(configurationTimeout>CONFIG_MODE_LIFETIME)isInConfigurationMode = false;
+	bs = handleButtInt(butt);
+	es = enco->handleEncoder(&ev);
+
+	if(es||bs){ return configure(bs,ev,es); }
+	return isInConfigurationMode;
+}
+bool ConfigureMenu::configure(char bv, uint16_t ev, signed char sign)
+{
+
+	static unsigned short menuItem = 0;
+
+	if(!isInConfigurationMode)
+	{
+
+		//Обработка вращения энкодера вне режима меню
+		if(sign!=0)//Если было вращение энкодера
+		{
+			if(sign>0){ }
+			else if(sign<0){ }
+			return false;
+		}
+
+		//Обработка кнопок вне режима меню
+		switch (bv)
+		{
+		//	ledRedTuggle();
+		case BUTT_SHORTCLICK:
+		{
+
+		}
+		case BUTT_LONGCLICK:
+		{
+			isInConfigurationMode = true;
+			enco->setEncVal(values[menuItem]);
+			enco->setMaxEncVal(maxVals[menuItem]);
+			break;
+		}
+		case BUTT_DOUBLECLICK:
+		{
+
+			break;
+		}
+		default:break;
+		}
+	}
+
+	if(isInConfigurationMode)
+	{
+
+		//lampConfigure 8 lamps, 24 hours on each
+		if(menuItem > 2)
+		{
+			static uint32_t mask;
+
+			mask = 0x00000001<<ev;//lampSubValue;
+			if(bv == BUTT_SHORTCLICK)
+			{
+				if(values[menuItem] & mask) values[menuItem] &= ~mask; else values[menuItem] |= mask;
+			}
+			else
+			if(bv == BUTT_DOUBLECLICK)
+			{
+					menuItem++;
+					//menuItem++;
+					if(menuItem>=count)
+					{
+						menuItem = 0;
+						setEncVal(values[0]);
+						setMaxEncVal(maxVals[0]);
+						isInConfigurationMode = false;
+						return false;
+					}
+
+							//	setEncVal(ev = values[menuItem]);
+							//	setMaxEncVal(maxVals[menuItem]);
+			}
+
+		//	if(sign!=0)//Если было вращение энкодера
+		//	{
+		//			if(sign>0){ lampSubValue++; }
+		//			else if(sign<0){ lampSubValue--; }
+
+		//	}
+			//disp->drawDebug2(menuItem, ev, values[menuItem]&mask);
+			uint8_t lampNo = (menuItem - 1)/2 - 1;
+			uint8_t colorIndex = menuItem%2;
+			disp->drawLampChannelsConfig(lampNo, colorIndex, ev, values[menuItem]&mask);
+			switchMenu(menuItem, values[menuItem]);
+			//values[menuItem] = mask;
+		}
+		else
+		{
+
+
+
+
+
+		configurationTimeout = 0;
+		if(bv == BUTT_SHORTCLICK)
+		{
+			menuItem++;
+			//menuItem++;
+			if(menuItem>=count)
+			{
+				menuItem = 0;
+				setEncVal(values[0]);
+				setMaxEncVal(maxVals[0]);
+				isInConfigurationMode = false;
+				return false;
+			}
+
+			setEncVal(ev = values[menuItem]);
+			setMaxEncVal(maxVals[menuItem]);
+		}
+		if(bv||sign){disp->drawDebug(menuItem, ev);  switchMenu(menuItem,ev); }
+		values[menuItem] = ev;
+		}
+
+
+		return true;
+	}
+	return false;
+
+}
+
+void ConfigureMenu::switchMenu(char punkt, unsigned short int val)
+{
+
+		(*fptr[punkt])(val);
+
+}
+/*
 #define CONF_MODE_TIME 0x01
 #define CONF_MODE_INTERV 0x02
 #define CONF_MODE_OFF 0x00
@@ -75,7 +236,7 @@ extern unsigned short int arr[];
 
 void confClock(char punkt, unsigned short int val)
 {
-	if(!punkt)timeHour = val; else { timeMinute = val; setTimeRTC(timeHour,timeMinute,0);}
+	//if(!punkt)timeHour = val; else { timeMinute = val; setTimeRTC(timeHour,timeMinute,0);}
 }
 
 void confOffHour(unsigned short int value)
@@ -110,14 +271,7 @@ __inline void swMenu(char punkt, unsigned short int val)
 		showOnOffConf(punkt,val);
 		configCurrentValuesInterval[punkt] = val;
 		setOnOffHourToBKP(punkt,val);
-		/*switch (punkt)
-		{
-			case 0:{confOnHour(val); showNightTime(1,onHour,onMinute);break;}
-			case 1:{confOnMinute(val); showNightTime(1,onHour,onMinute);break;}
-			case 2:{confOffHour(val); showDayTime(1,offHour,offMinute);break;}
-			case 3:{confOffMinute(val); showDayTime(1,offHour,offMinute);break;}
-			default: break;
-		}*/
+
 	}
 	//uSendMsgNum("menu punkt =",(unsigned short int)punkt);
 	//uSendMsgNum("val =",(unsigned short int)val); uSendMsg("\n");
@@ -231,44 +385,5 @@ void confByEnc(unsigned char bv, unsigned short int ev, signed char sign)
 		if(bv||sign) swMenu(menuItem,ev);
 	}
 	}
-/*	
-	//Обработка режима меню
-	if(isInConfigurationMode == CONF_MODE_TIME)
-	{
-	//	uSendMsg("conf mode - on!");
-		configurationTimeout = 0;
-		if(bv == BUTT_SHORTCLICK)
-		{
-			menuItem++;
-		//menuItem++;	
-			if(menuItem>=MENU_COUNT_VAL)
-			{
-				menuItem = 0;
-				isInConfigurationMode = CONF_MODE_OFF;
-				setEncVal(ev = configCurrentValues[menuItem]);	
-				setMaxEncVal(configMaxValues[menuItem]);
-				return;
-			}
-			setEncVal(ev = configCurrentValues[menuItem]);	
-		  setMaxEncVal(configMaxValues[menuItem]);
-		}	
-		if(bv||sign) swMenu(menuItem,ev);
-	}
-	*/
-//}
-
-//Обработка пользовательского интерфейса ввода
-void handleUI(volatile struct Button* bt)
-{
-	signed char es = 0;
-	unsigned short int ev = 0;
-	char bs = 0;
-	if(configurationTimeout>CONFIG_MODE_LIFETIME)isInConfigurationMode = CONFIG_MODE_OFF;
-	bs = handleButtInt(bt);
-	es = handleEncoder(&ev);
-	//uSendMsgNum(" EV = ",ev);
-	//uSendMsgNum("  SIGN =",es);
-	//uSendMsg("\n");
-	if(es||bs){confByEnc(bs,ev,es);}
-}
+*/
 

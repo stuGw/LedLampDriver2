@@ -2,17 +2,11 @@
 #include "system.h"
 
 
-void initButtons(volatile struct Button* bt0,volatile struct Button* bt1,volatile  struct Button* bt2)
+void initButtons(volatile struct Button* bt0)
 {
 	clearButtState(bt0);
-	clearButtState(bt1);
-	clearButtState(bt2);
 	bt0->ipt = 0;
-	bt2->ipt = 0;
-	bt1->ipt = 0;
 	bt0->buttBit = BUTT_NEXT_PB0;
-	bt2->buttBit = BUTT_PREV_PB2;	
-	bt1->buttBit = BUTT_ENTER_PB1;
 }
 void clearButtState(volatile struct Button* bt)
 {

@@ -54,7 +54,7 @@ char checkButtState(volatile struct Button* bt);
 //Обработка прерывания по нажатию кнопки
 char handleButtInt(volatile struct Button* bt);
 signed char handleEncoder(unsigned short int *val);
-void initButtons(volatile struct Button* bt0, volatile struct Button* bt1, volatile struct Button* bt2);
+void initButtons(volatile struct Button* bt0);
 unsigned short int getEncVal(void);
 void setEncVal(unsigned short int val);
 void setMaxEncVal(unsigned short int mval);

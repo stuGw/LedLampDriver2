@@ -27,6 +27,7 @@
 #include "lampdisplay.h"
 #include "buttons.h"
 #include "lampdriver.h"
+#include "menu.h"
 
 volatile struct Button bt0;
 
@@ -43,6 +44,7 @@ LampDriver* lampDriver;
 Encoder* enco;
 LampDisplay display;
 HD44780Display lcd;//display
+ConfigureMenu* ui;
 bool flagRtc = 0;
 bool flagButt = 0;
 volatile uint32_t systemTimerValue = 0;
@@ -267,20 +269,132 @@ void initLamps()
 {
 	initLampsGPIO();
 
-	lamps[0] = new Led(&GPIOA->ODR, GPIO_ODR_ODR8, 0);
-	lamps[1] = new Led(&GPIOA->ODR, GPIO_ODR_ODR9, 0);
-	lamps[2] = new Led(&GPIOA->ODR, GPIO_ODR_ODR10, 0);
-	lamps[3] = new Led(&GPIOA->ODR, GPIO_ODR_ODR11, 0);
+	lamps[0] = new Led(&GPIOA->ODR, GPIO_ODR_ODR8, 1);
+	lamps[1] = new Led(&GPIOA->ODR, GPIO_ODR_ODR9, 1);
+	lamps[2] = new Led(&GPIOA->ODR, GPIO_ODR_ODR10, 1);
+	lamps[3] = new Led(&GPIOA->ODR, GPIO_ODR_ODR11, 1);
 
-	lamps[4] = new Led(&GPIOB->ODR, GPIO_ODR_ODR12, 0);
-	lamps[5] = new Led(&GPIOB->ODR, GPIO_ODR_ODR13, 0);
-	lamps[6] = new Led(&GPIOB->ODR, GPIO_ODR_ODR14, 0);
-	lamps[7] = new Led(&GPIOB->ODR, GPIO_ODR_ODR15, 0);
+	lamps[4] = new Led(&GPIOB->ODR, GPIO_ODR_ODR12, 1);
+	lamps[5] = new Led(&GPIOB->ODR, GPIO_ODR_ODR13, 1);
+	lamps[6] = new Led(&GPIOB->ODR, GPIO_ODR_ODR14, 1);
+	lamps[7] = new Led(&GPIOB->ODR, GPIO_ODR_ODR15, 1);
 
 	int i = 0;
 	while(i<8)
 	{
 		lamps[i]->off();
+		i++;
+	}
+}
+
+void setMinute(uint32_t value)
+{
+
+}
+
+void setSecund(uint32_t value)
+{
+
+}
+
+void setHour(uint32_t value)
+{
+
+}
+
+void setLamp1(uint32_t value)
+{
+	int i = 0;
+	uint32_t mask = 0x00000001;
+	while(i<24)
+	{
+
+		lampDriver->setTimeOnOff(0, i, value & mask);
+		mask = mask << 1;
+		i++;
+	}
+}
+
+void setLamp2(uint32_t value)
+{
+	int i = 0;
+	uint32_t mask = 0x00000001;
+	while(i<24)
+	{
+		lampDriver->setTimeOnOff(1, i, value & mask);
+		mask = mask << 1;
+		i++;
+	}
+}
+
+void setLamp3(uint32_t value)
+{
+	int i = 0;
+	uint32_t mask = 0x00000001;
+	while(i<24)
+	{
+		lampDriver->setTimeOnOff(2, i, value & mask);
+		mask = mask << 1;
+		i++;
+	}
+}
+
+void setLamp4(uint32_t value)
+{
+	int i = 0;
+	uint32_t mask = 0x00000001;
+	while(i<24)
+	{
+		lampDriver->setTimeOnOff(3, i, value & mask);
+		mask = mask << 1;
+		i++;
+	}
+}
+
+void setLamp5(uint32_t value)
+{
+	int i = 0;
+	uint32_t mask = 0x00000001;
+	while(i<24)
+	{
+		lampDriver->setTimeOnOff(4, i, value & mask);
+		mask = mask << 1;
+		i++;
+	}
+}
+
+void setLamp6(uint32_t value)
+{
+	int i = 0;
+	uint32_t mask = 0x00000001;
+	while(i<24)
+	{
+		lampDriver->setTimeOnOff(5, i, value & mask);
+		mask = mask << 1;
+		i++;
+	}
+}
+
+void setLamp7(uint32_t value)
+{
+	int i = 0;
+	uint32_t mask = 0x00000001;
+	while(i<24)
+	{
+		lampDriver->setTimeOnOff(6, i, value & mask);
+		mask = mask << 1;
+		i++;
+	}
+}
+
+void setLamp8(uint32_t value)
+{
+	int i = 0;
+	uint32_t mask = 0x00000001;
+	while(i<24)
+	{
+		lampDriver->setTimeOnOff(7, i, value & mask);
+		mask = mask << 1;
 		i++;
 	}
 }
@@ -318,6 +432,7 @@ int main(void)
 	justLed = new Led(&GPIOC->ODR, GPIO_ODR_ODR13,0);
 
 	enco = new Encoder(&TIM4->CNT, &TIM4->ARR, 10, 2);
+	initButtons(&bt0);
 
 
 	initLamps();
@@ -347,6 +462,24 @@ int main(void)
 
 	display.setDisplay(&lcd);
 
+
+	 ui = new ConfigureMenu(11, enco, &bt0);
+
+	 ui->setFunction(0, setHour, 23, 0);
+	 ui->setFunction(1, setMinute, 59, 0);
+	 ui->setFunction(2, setSecund, 59, 0);
+
+	 ui->setFunction(3, setLamp1, 23, 0);
+	 ui->setFunction(4, setLamp2, 23, 0);
+	 ui->setFunction(5, setLamp3, 23, 0);
+	 ui->setFunction(6, setLamp4, 23, 0);
+	 ui->setFunction(7, setLamp5, 23, 0);
+	 ui->setFunction(8, setLamp6, 23, 0);
+	 ui->setFunction(9, setLamp7, 23, 0);
+	 ui->setFunction(10,setLamp8, 23, 0);
+
+	 ui->setDebugDisplay(&display);
+
 lamps[0]->on();
 lamps[4+1]->on();
 lamps[2]->on();
@@ -375,7 +508,8 @@ lamps[4+2]->on();
 				flagRtc = 0;
 				getTimeRTC(&h, &m, &s);
 				justLed->tuggle();
-				display.drawTime(h, m, s);
+			//	display.drawTime(h, m, s);
+				lampDriver->driveLamps(h);
 			}
 
 		if(systemTimerValue%1000 == 0)
@@ -387,8 +521,8 @@ lamps[4+2]->on();
 
 		if(flagButt)
 		{
-			es = enco->handleEncoder(&ev);
-			bs = handleButtInt(&bt0);
+			//es = enco->handleEncoder(&ev);//get enco value
+			//bs = handleButtInt(&bt0);//get button value
 
 
 
@@ -396,7 +530,12 @@ lamps[4+2]->on();
 		//	if(bs == BUTT_SHORTCLICK)display.drawLampChannelsConfig(0, 0, 17, 1);
 			//else if(bs == BUTT_LONGCLICK)display.drawLampChannelsConfig(1, 0, 17, 0);
 			//else if(bs == BUTT_DOUBLECLICK)display.drawLampChannelsConfig(2, 1, 17, 1);
-			display.drawLampStatus(lamps);
+		//	display.drawLampStatus(lamps);
+			if(!ui->handleUI())
+			{
+				display.drawLampStatus(lamps);
+				display.drawTime(h, m, s);
+			}
 			flagButt = 0;
 			display.refresh();
 		}

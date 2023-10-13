@@ -27,12 +27,13 @@ class LampDisplay: public Display
 	static constexpr uint8_t LAMP_CONFIG_XPOS { 0 };//1A
 	static constexpr uint8_t LAMP_CONFIG_COLOR_XPOS { LAMP_CONFIG_XPOS + 2 };//1A
 	static constexpr uint8_t LAMP_CONFIG_HOUR_XPOS { LAMP_CONFIG_XPOS + 9 };//1A
-	static constexpr uint8_t LAMP_CONFIG_STATE_YPOS { 5 };
+	static constexpr uint8_t LAMP_CONFIG_STATE_YPOS { 1 };
 	static constexpr uint8_t LAMP_CONFIG_STATE_XPOS { 5 };
 public:
 	LampDisplay();
 	virtual ~LampDisplay();
 	void drawTime(uint8_t h, uint8_t m, uint8_t s);
+	void drawTimeConfig(uint8_t menuItem, uint8_t hour, uint8_t min, uint8_t sec);
 		void drawLampConfigTime(uint8_t lampNo, uint8_t lampColorm, uint8_t hour);
 		void drawLampConfigStatuc(bool on);
 		void drawLampStatus(uint8_t l1, uint8_t l2, uint8_t l3, uint8_t l4);
@@ -41,6 +42,8 @@ public:
 
 		void fillBufferTime(uint8_t pos, uint8_t h, uint8_t m, uint8_t s);
 		void fillLampStatus(uint8_t pos, uint8_t status);
+		void drawDebug(uint8_t punkt, uint8_t value);
+		void drawDebug2(uint8_t punkt, uint8_t value, uint32_t state);
 		void refresh(){ refreshDisplay(); }
 };
 

@@ -37,11 +37,16 @@ void LampDriver::setTimeOnOff(uint8_t lampIndex, uint8_t timeIndex, uint8_t on)
 
 void LampDriver::driveLamps( uint8_t currentHour )
 {
-	for(int i = 0; i < countChannels; i++)
-	{
-		if(timesPtr[i][currentHour])ledsPtr[countChannels]->on();
-		else ledsPtr[countChannels]->off();
-	}
+	//static uint8_t previousHour { 24 };
+	//if(previousHour != currentHour)
+	//{
+		for(int i = 0; i < countChannels; i++)
+		{
+			if(timesPtr[i][currentHour])ledsPtr[i]->on();
+			else ledsPtr[i]->off();
+		}
+	//	previousHour = currentHour;
+	//}
 }
 
 LampDriver::~LampDriver() {
