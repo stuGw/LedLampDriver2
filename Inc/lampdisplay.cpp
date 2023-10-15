@@ -170,6 +170,11 @@ void LampDisplay::drawLampStatus(uint8_t l1, uint8_t l2, uint8_t l3, uint8_t l4)
 
 void LampDisplay::drawTimeConfig(uint8_t menuItem, uint8_t hour, uint8_t min, uint8_t sec)
 {
+	clearBuff0();
+	fillBufferTime(TIME_CONF_YPOS*cols + TIME_CONF_XPOS, hour, min,sec);
+	clearBuff1();
+	uint8_t offset = (menuItem)*3;
+	buffer[TIME_CONF2_YPOS*cols + TIME_CONF_XPOS + offset] = '^';
 
 }
 

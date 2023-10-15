@@ -29,6 +29,10 @@ class LampDisplay: public Display
 	static constexpr uint8_t LAMP_CONFIG_HOUR_XPOS { LAMP_CONFIG_XPOS + 9 };//1A
 	static constexpr uint8_t LAMP_CONFIG_STATE_YPOS { 1 };
 	static constexpr uint8_t LAMP_CONFIG_STATE_XPOS { 5 };
+	static constexpr uint8_t TIME_CONF_YPOS { 0 };
+	static constexpr uint8_t TIME_CONF2_YPOS { 1 };
+	static constexpr uint8_t TIME_CONF_XPOS { 4 };
+
 public:
 	LampDisplay();
 	virtual ~LampDisplay();

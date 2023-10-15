@@ -31,6 +31,8 @@
 
 volatile struct Button bt0;
 
+GlobalTime timeRTC;
+
 #if !defined(__SOFT_FP__) && defined(__ARM_FP)
   #warning "FPU is not initialized, but the project is compiling for an FPU. Please initialize the FPU before use."
 #endif
@@ -269,8 +271,8 @@ void initLamps()
 {
 	initLampsGPIO();
 
-	lamps[0] = new Led(&GPIOA->ODR, GPIO_ODR_ODR8, 1);
-	lamps[1] = new Led(&GPIOA->ODR, GPIO_ODR_ODR9, 1);
+	lamps[1] = new Led(&GPIOA->ODR, GPIO_ODR_ODR8, 1);
+	lamps[0] = new Led(&GPIOA->ODR, GPIO_ODR_ODR9, 1);
 	lamps[2] = new Led(&GPIOA->ODR, GPIO_ODR_ODR10, 1);
 	lamps[3] = new Led(&GPIOA->ODR, GPIO_ODR_ODR11, 1);
 
@@ -289,16 +291,18 @@ void initLamps()
 
 void setMinute(uint32_t value)
 {
-
+	timeRTC.m = value;
 }
 
 void setSecund(uint32_t value)
 {
-
+	timeRTC.s = value;
+	setTimeRTC(timeRTC.h, timeRTC.m, timeRTC.s);
 }
 
 void setHour(uint32_t value)
 {
+	timeRTC.h = value;
 
 }
 
@@ -309,7 +313,7 @@ void setLamp1(uint32_t value)
 	while(i<24)
 	{
 
-		lampDriver->setTimeOnOff(0, i, value & mask);
+		lampDriver->setTimeOnOff(0, i,(((value & mask) == mask) ? 1 : 0));
 		mask = mask << 1;
 		i++;
 	}
@@ -321,7 +325,7 @@ void setLamp2(uint32_t value)
 	uint32_t mask = 0x00000001;
 	while(i<24)
 	{
-		lampDriver->setTimeOnOff(1, i, value & mask);
+		lampDriver->setTimeOnOff(1, i, (((value & mask) == mask) ? 1 : 0));
 		mask = mask << 1;
 		i++;
 	}
@@ -333,7 +337,7 @@ void setLamp3(uint32_t value)
 	uint32_t mask = 0x00000001;
 	while(i<24)
 	{
-		lampDriver->setTimeOnOff(2, i, value & mask);
+		lampDriver->setTimeOnOff(2, i, (((value & mask) == mask) ? 1 : 0));
 		mask = mask << 1;
 		i++;
 	}
@@ -345,7 +349,7 @@ void setLamp4(uint32_t value)
 	uint32_t mask = 0x00000001;
 	while(i<24)
 	{
-		lampDriver->setTimeOnOff(3, i, value & mask);
+		lampDriver->setTimeOnOff(3, i,(((value & mask) == mask) ? 1 : 0));
 		mask = mask << 1;
 		i++;
 	}
@@ -357,7 +361,7 @@ void setLamp5(uint32_t value)
 	uint32_t mask = 0x00000001;
 	while(i<24)
 	{
-		lampDriver->setTimeOnOff(4, i, value & mask);
+		lampDriver->setTimeOnOff(4, i,(((value & mask) == mask) ? 1 : 0));
 		mask = mask << 1;
 		i++;
 	}
@@ -369,7 +373,7 @@ void setLamp6(uint32_t value)
 	uint32_t mask = 0x00000001;
 	while(i<24)
 	{
-		lampDriver->setTimeOnOff(5, i, value & mask);
+		lampDriver->setTimeOnOff(5, i, (((value & mask) == mask) ? 1 : 0));
 		mask = mask << 1;
 		i++;
 	}
@@ -381,7 +385,7 @@ void setLamp7(uint32_t value)
 	uint32_t mask = 0x00000001;
 	while(i<24)
 	{
-		lampDriver->setTimeOnOff(6, i, value & mask);
+		lampDriver->setTimeOnOff(6, i,(((value & mask) == mask) ? 1 : 0));
 		mask = mask << 1;
 		i++;
 	}
@@ -393,7 +397,8 @@ void setLamp8(uint32_t value)
 	uint32_t mask = 0x00000001;
 	while(i<24)
 	{
-		lampDriver->setTimeOnOff(7, i, value & mask);
+
+		lampDriver->setTimeOnOff(7, i, (((value & mask) == mask) ? 1 : 0));
 		mask = mask << 1;
 		i++;
 	}
@@ -463,7 +468,7 @@ int main(void)
 	display.setDisplay(&lcd);
 
 
-	 ui = new ConfigureMenu(11, enco, &bt0);
+	 ui = new ConfigureMenu(11, enco, &bt0,&timeRTC);
 
 	 ui->setFunction(0, setHour, 23, 0);
 	 ui->setFunction(1, setMinute, 59, 0);
@@ -506,10 +511,11 @@ lamps[4+2]->on();
 			if(flagRtc)
 			{
 				flagRtc = 0;
-				getTimeRTC(&h, &m, &s);
+				if(!ui->isConfigMode()){ getTimeRTC(&(timeRTC.h), &(timeRTC.m), &(timeRTC.s)); }
 				justLed->tuggle();
 			//	display.drawTime(h, m, s);
-				lampDriver->driveLamps(h);
+				if(timeRTC.s<24)lampDriver->driveLamps(timeRTC.s);
+				//lampDriver->driveLamps(timeRTC.h);
 			}
 
 		if(systemTimerValue%1000 == 0)
@@ -534,7 +540,7 @@ lamps[4+2]->on();
 			if(!ui->handleUI())
 			{
 				display.drawLampStatus(lamps);
-				display.drawTime(h, m, s);
+				display.drawTime(timeRTC.h, timeRTC.m, timeRTC.s);
 			}
 			flagButt = 0;
 			display.refresh();

@@ -8,7 +8,9 @@
 #include <stdint.h>
 #include "lampdisplay.h"
 
-ConfigureMenu::ConfigureMenu(uint8_t countValues, Encoder* encoder, volatile Button* button)
+
+
+ConfigureMenu::ConfigureMenu(uint8_t countValues, Encoder* encoder, volatile Button* button, GlobalTime* time)
 {
 	count = countValues;
 	fptr = new func_t[countValues];
@@ -18,6 +20,8 @@ ConfigureMenu::ConfigureMenu(uint8_t countValues, Encoder* encoder, volatile But
 	butt = button;
 	isInConfigurationMode = false;
 	configurationTimeout = 0;
+
+	timePtr = time;
 }
 
 bool ConfigureMenu::setFunction(uint8_t index, func_t ptr, uint32_t maxValue, uint32_t currentValue)
@@ -26,6 +30,7 @@ bool ConfigureMenu::setFunction(uint8_t index, func_t ptr, uint32_t maxValue, ui
 	fptr[index] = ptr;
 	maxVals[index] = maxValue;
 	values[index] = currentValue;
+	return true;
 }
 //Обработка пользовательского интерфейса ввода
 bool ConfigureMenu::handleUI()
@@ -67,13 +72,17 @@ bool ConfigureMenu::configure(char bv, uint16_t ev, signed char sign)
 		case BUTT_LONGCLICK:
 		{
 			isInConfigurationMode = true;
-			enco->setEncVal(values[menuItem]);
-			enco->setMaxEncVal(maxVals[menuItem]);
+			menuItem = 3;
+			enco->setEncVal(0);
+			enco->setMaxEncVal(23);
 			break;
 		}
 		case BUTT_DOUBLECLICK:
 		{
-
+			isInConfigurationMode = true;
+			menuItem = 0;
+						enco->setEncVal(values[menuItem]);
+						enco->setMaxEncVal(maxVals[menuItem]);
 			break;
 		}
 		default:break;
@@ -86,9 +95,9 @@ bool ConfigureMenu::configure(char bv, uint16_t ev, signed char sign)
 		//lampConfigure 8 lamps, 24 hours on each
 		if(menuItem > 2)
 		{
-			static uint32_t mask;
+			uint32_t mask;
 
-			mask = 0x00000001<<ev;//lampSubValue;
+			mask = 0x00000001<<(uint32_t)ev;//lampSubValue;
 			if(bv == BUTT_SHORTCLICK)
 			{
 				if(values[menuItem] & mask) values[menuItem] &= ~mask; else values[menuItem] |= mask;
@@ -101,8 +110,8 @@ bool ConfigureMenu::configure(char bv, uint16_t ev, signed char sign)
 					if(menuItem>=count)
 					{
 						menuItem = 0;
-						setEncVal(values[0]);
-						setMaxEncVal(maxVals[0]);
+						setEncVal(0);
+						setMaxEncVal(23);
 						isInConfigurationMode = false;
 						return false;
 					}
@@ -120,6 +129,7 @@ bool ConfigureMenu::configure(char bv, uint16_t ev, signed char sign)
 			//disp->drawDebug2(menuItem, ev, values[menuItem]&mask);
 			uint8_t lampNo = (menuItem - 1)/2 - 1;
 			uint8_t colorIndex = menuItem%2;
+
 			disp->drawLampChannelsConfig(lampNo, colorIndex, ev, values[menuItem]&mask);
 			switchMenu(menuItem, values[menuItem]);
 			//values[menuItem] = mask;
@@ -136,7 +146,7 @@ bool ConfigureMenu::configure(char bv, uint16_t ev, signed char sign)
 		{
 			menuItem++;
 			//menuItem++;
-			if(menuItem>=count)
+			if(menuItem>=3)
 			{
 				menuItem = 0;
 				setEncVal(values[0]);
@@ -148,7 +158,12 @@ bool ConfigureMenu::configure(char bv, uint16_t ev, signed char sign)
 			setEncVal(ev = values[menuItem]);
 			setMaxEncVal(maxVals[menuItem]);
 		}
-		if(bv||sign){disp->drawDebug(menuItem, ev);  switchMenu(menuItem,ev); }
+		if(bv||sign)
+		{
+
+			switchMenu(menuItem,ev);
+			disp->drawTimeConfig(menuItem , timePtr->h, timePtr->m, timePtr->s);
+		}
 		values[menuItem] = ev;
 		}
 
@@ -159,7 +174,7 @@ bool ConfigureMenu::configure(char bv, uint16_t ev, signed char sign)
 
 }
 
-void ConfigureMenu::switchMenu(char punkt, unsigned short int val)
+void ConfigureMenu::switchMenu(char punkt, uint32_t val)
 {
 
 		(*fptr[punkt])(val);
